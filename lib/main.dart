@@ -51,18 +51,50 @@ class AppDb {
 class SyncService {
   final AppDb db;
   SyncService(this.db);
-  Future<int> sync() async {
-    final uri = Uri.parse('$apiBase/api/references');
-    final res = await http.get(uri).timeout(const Duration(seconds: 20));
-    if (res.statusCode != 200) throw Exception('HTTP ${res.statusCode}');
-    final decoded = jsonDecode(res.body);
-    final list = decoded is List ? decoded : (decoded['references'] ?? []);
+
+  Future<int> _saveResponse(String body) async {
+    final decoded = jsonDecode(body);
+    final raw = decoded is List
+        ? decoded
+        : (decoded is Map<String, dynamic> ? (decoded['references'] ?? []) : []);
+    if (raw is! List) throw Exception('Format de données invalide');
+
     int count = 0;
-    for (final item in list) {
-      final m = Map<String,dynamic>.from(item);
-      if ((m['status'] ?? 'published') == 'published') { await db.upsert(m); count++; }
+    for (final item in raw) {
+      if (item is! Map) continue;
+      final m = Map<String, dynamic>.from(item);
+      if ((m['status'] ?? 'published').toString().toLowerCase() == 'published') {
+        await db.upsert(m);
+        count++;
+      }
     }
     return count;
+  }
+
+  Future<int> sync() async {
+    Object? apiError;
+
+    // 1) Preferred source: Flask API.
+    try {
+      final uri = Uri.parse('$apiBase/api/references');
+      final res = await http.get(uri).timeout(const Duration(seconds: 20));
+      if (res.statusCode == 200) return await _saveResponse(res.body);
+      apiError = 'API HTTP ${res.statusCode}';
+    } catch (e) {
+      apiError = e;
+    }
+
+    // 2) Fallback: public library.json. This keeps the app usable even if
+    // the Render server is sleeping, restarting, or not yet deployed with
+    // the mobile endpoint.
+    try {
+      final uri = Uri.parse('$publicBase/data/library.json');
+      final res = await http.get(uri).timeout(const Duration(seconds: 20));
+      if (res.statusCode == 200) return await _saveResponse(res.body);
+      throw Exception('library.json HTTP ${res.statusCode}');
+    } catch (e) {
+      throw Exception('Échec de synchronisation. API: $apiError | Fichier public: $e');
+    }
   }
 }
 
@@ -75,7 +107,24 @@ class _HomePageState extends State<HomePage> {
   List<Map<String,dynamic>> refs=[]; bool syncing=false; String q='';
   @override void initState(){super.initState(); load(); syncSilently();}
   Future<void> load() async { final x=await widget.db.all(); if(mounted)setState(()=>refs=x); }
-  Future<void> syncSilently() async { try { setState(()=>syncing=true); await SyncService(widget.db).sync(); await load(); } catch (_) {} finally { if(mounted)setState(()=>syncing=false); } }
+  Future<void> syncSilently() async {
+    if (mounted) setState(()=>syncing=true);
+    try {
+      final count = await SyncService(widget.db).sync();
+      await load();
+      if (mounted && count > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$count référence(s) synchronisée(s)')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Synchronisation impossible: $e')),
+        );
+      }
+    } finally { if(mounted)setState(()=>syncing=false); }
+  }
   List<Map<String,dynamic>> get filtered => refs.where((r){final s=q.toLowerCase(); return s.isEmpty || '${r['title']} ${r['author']} ${r['category']} ${r['keywords']}'.toLowerCase().contains(s);}).toList();
   @override Widget build(BuildContext context)=>Scaffold(
     appBar: AppBar(title: const Text('RA9MANA DZ',style:TextStyle(fontWeight:FontWeight.w800)), actions:[IconButton(onPressed:syncing?null:syncSilently,icon:Icon(syncing?Icons.sync:Icons.sync_outlined))]),
