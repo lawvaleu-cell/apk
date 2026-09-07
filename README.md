@@ -1,24 +1,21 @@
-# RA9MANA DZ Android
+# RA9MANA DZ — Android Legal Library
 
-A real Flutter Android app for the RA9MANA legal library. References are stored in SQLite and remain available offline. When the app starts or the user taps Sync, it fetches published references from the Flask API and updates the local database. PDFs are downloaded on first opening and then remain available offline.
+Standalone Flutter Android application for the RA9MANA DZ legal reference library.
 
-## Important
-Set `apiBase` and `publicBase` in `lib/main.dart` to the final API and website base URLs before release.
+## Features
+- Legal references stored locally in SQLite.
+- Automatic synchronization when the device has internet access.
+- References remain available offline after synchronization.
+- PDF files are downloaded once and cached locally for offline reading.
+- Search and reference details.
+- External source links open in the browser.
+- No WebView: this is a real Flutter Android application.
 
-The Flask server must expose:
-`GET /api/references` returning either a JSON array or `{ "references": [...] }`.
+## Build with GitHub Actions
+1. Create a GitHub repository.
+2. Upload the contents of this folder to the repository root.
+3. Push to `main`, or run **Actions → Build RA9MANA APK → Run workflow**.
+4. Open the completed workflow run.
+5. Download the artifact named `ra9mana-dz-apk`.
 
-## Build APK locally
-```bash
-flutter pub get
-flutter build apk --release
-```
-
-APK output: `build/app/outputs/flutter-apk/app-release.apk`
-
-
-## How synchronization works
-- The app always opens from the local SQLite database, so the library remains usable without internet.
-- At startup it tries `GET /api/references`.
-- Only records with `status=published` are stored locally. Existing records are replaced by ID, so newly published references appear automatically after the next successful sync.
-- A PDF is downloaded only when the user opens it the first time; the downloaded file is then kept on the device for offline reading.
+The workflow uses Flutter 3.47.2 and `pdfrx 2.6.1`, which supports Flutter 3.47/Dart 3.13+.

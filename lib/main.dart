@@ -13,6 +13,7 @@ const String publicBase = 'https://ra9mana-dz.github.io/ra9mana-dz-pro';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  pdfrxFlutterInitialize();
   final db = await AppDb.open();
   runApp(Ra9manaApp(db: db));
 }
@@ -90,7 +91,7 @@ class ReferenceCard extends StatelessWidget {
   const ReferenceCard({super.key,required this.ref,required this.db});
   @override Widget build(BuildContext context)=>Card(margin:const EdgeInsets.fromLTRB(16,6,16,6),child:InkWell(borderRadius:BorderRadius.circular(16),onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>ReferencePage(ref:ref,db:db))),child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(children:[Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),decoration:BoxDecoration(color:Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(20)),child:Text(ref['type']??'reference')),const Spacer(),Text(ref['year']??'')]),
-    const SizedBox(height:8), Text(ref['title']??'',style:const TextStyle(fontSize:17,fontWeight:FontWeight.w750)),
+    const SizedBox(height:8), Text(ref['title']??'',style:const TextStyle(fontSize:17,fontWeight:FontWeight.w700)),
     const SizedBox(height:6),Text('${ref['category']??''} • ${ref['country']??''}',style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant)),
     if((ref['description']??'').toString().isNotEmpty) ...[const SizedBox(height:6),Text(ref['description'],maxLines:2,overflow:TextOverflow.ellipsis)]
   ]))));

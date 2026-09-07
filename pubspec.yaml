@@ -1,23 +1,26 @@
 name: ra9mana_legal_library
 description: RA9MANA DZ - Offline legal library with automatic online synchronization.
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
+  sdk: '>=3.13.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
+
   cupertino_icons: ^1.0.8
   http: ^1.2.2
   sqflite: ^2.4.1
   path: ^1.9.0
   path_provider: ^2.1.5
   url_launcher: ^6.3.1
-  pdfrx: ^1.0.95
+  pdfrx: 2.6.1
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/
