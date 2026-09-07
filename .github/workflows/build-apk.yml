@@ -3,8 +3,7 @@ name: Build RA9MANA APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   build:
@@ -21,11 +20,8 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Generate Android platform files
+      - name: Create Android platform
         run: flutter create . --platforms=android --org dz.ra9mana --project-name ra9mana_legal_library
-
-      - name: Flutter doctor
-        run: flutter doctor -v
 
       - name: Get dependencies
         run: flutter pub get
@@ -33,7 +29,7 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Build release APK
+      - name: Build APK
         run: flutter build apk --release
 
       - name: Upload APK
